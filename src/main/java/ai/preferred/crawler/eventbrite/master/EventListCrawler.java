@@ -53,8 +53,8 @@ public class EventListCrawler {
 		return AsyncFetcher.builder()
         .setValidator(
             new EmptyContentValidator(),
-            new StatusOkValidator())
-            //new ListingValidator())
+            new StatusOkValidator(),
+            new EventListValidator())
         .build();
   }
 
