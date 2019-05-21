@@ -39,6 +39,7 @@ public class EventListParser {
 		event.setUrl(url); 
 		//return event; 
 		try{
+			// TODO:
 			Document descDocument = Jsoup.connect(url).get(); 
 			//System.out.println(descDocument.body().text()); 
 			Element descElement = descDocument.selectFirst("div[data-automation=listing-event-description]"); 
