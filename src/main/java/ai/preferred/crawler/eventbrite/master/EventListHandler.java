@@ -59,6 +59,7 @@ public class EventListHandler implements Handler {
 				}
 			}
 			if(currentPage > 5){
+				// TODO:
 				System.exit(0); 
 			}
 			builder.setParameter("page", String.valueOf(currentPage + 1));
