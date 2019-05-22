@@ -2,6 +2,7 @@ package ai.preferred.crawler.eventbrite.master;
 
 import ai.preferred.crawler.EntityCSVStorage;
 import ai.preferred.crawler.eventbrite.entity.EBEvent;
+import ai.preferred.crawler.eventbrite.master.EventHandler; 
 import ai.preferred.venom.Handler;
 import ai.preferred.venom.Session;
 import ai.preferred.venom.Worker;
@@ -31,23 +32,8 @@ public class EventListHandler implements Handler {
 		// JSoup
 		final Document document = response.getJsoup();
 		
-		final List<EBEvent> eventList = EventListParser.parseListing(document);
-		
-		// Get the CSV printer we created
-		final EntityCSVStorage<EBEvent> storage = session.get(EventListCrawler.STORAGE_KEY);
-		
-		// Use this wrapper for every IO task, this maintains CPU utilisation to speed up crawling
-		worker.executeBlockingIO(() -> {
-			for (final EBEvent eb : eventList) {
-				LOGGER.info("storing event: {}", eb.getTitle()); 
-				try {
-					storage.append(eb);
-				} catch (IOException e) {
-					LOGGER.error("Unable to store listing.", e); 
-				}
-			}
-		}); 
-		
+		EventListParser.parseListing(document, scheduler); 
+
 		// Crawl another page if there's a next page
 		final String url = request.getUrl();
 		try {
@@ -58,13 +44,12 @@ public class EventListHandler implements Handler {
 					currentPage = Integer.parseInt(param.getValue());
 				}
 			}
-			if(currentPage > 5){
-				System.exit(0); 
+			if(currentPage <= 5){
+				builder.setParameter("page", String.valueOf(currentPage + 1));
+				final String nextPageUrl = builder.toString();
+				// Schedule the next page
+				scheduler.add(new VRequest(nextPageUrl), this);
 			}
-			builder.setParameter("page", String.valueOf(currentPage + 1));
-			final String nextPageUrl = builder.toString();
-			// Schedule the next page
-			scheduler.add(new VRequest(nextPageUrl), this);
 		} catch (URISyntaxException | NumberFormatException e) {
 			LOGGER.error("unable to parse url: ", e);
 		}

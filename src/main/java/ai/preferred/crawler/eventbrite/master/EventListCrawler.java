@@ -5,6 +5,7 @@ import ai.preferred.crawler.eventbrite.entity.EBEvent;
 import ai.preferred.venom.Crawler;
 import ai.preferred.venom.Session;
 import ai.preferred.venom.SleepScheduler;
+import ai.preferred.venom.job.*; 
 import ai.preferred.venom.fetcher.AsyncFetcher;
 import ai.preferred.venom.fetcher.Fetcher;
 import ai.preferred.venom.request.VRequest;
@@ -33,9 +34,11 @@ public class EventListCrawler {
 		  final Session session = Session.builder()
 			  .put(STORAGE_KEY, storage)
 			  .build();
+			  
+		  final FIFOScheduler scheduler = new FIFOScheduler(); 
 
 		  // Start crawler
-		  try (final Crawler crawler = createCrawler(createFetcher(), session).start()) {
+		  try (final Crawler crawler = createCrawler(createFetcher(), session, scheduler).start()) {
 			LOGGER.info("starting crawler...");
 
 			final String startUrl = "https://www.eventbrite.com/d/singapore--singapore/all-events/";
@@ -56,12 +59,13 @@ public class EventListCrawler {
             new StatusOkValidator(),
             new EventListValidator())
         .build();
-  }
+	}
 
-	private static Crawler createCrawler(Fetcher fetcher, Session session) {
+	private static Crawler createCrawler(Fetcher fetcher, Session session, AbstractQueueScheduler scheduler) {
 		return Crawler.builder()
 			.setFetcher(fetcher)
 			.setSession(session)
+			.setScheduler(scheduler)
 			// Just to be polite
 			.setSleepScheduler(new SleepScheduler(1500, 3000))
 			.build();
